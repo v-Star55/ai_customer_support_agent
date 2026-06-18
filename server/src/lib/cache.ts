@@ -39,7 +39,7 @@ export async function updateChatCache(
       return [];
     }
 
-    const formattedMessages = conversation.messages.map((message) => ({
+    const formattedMessages = conversation.messages.map((message: { sender: string; content: string }) => ({
       role: message.sender === "USER" ? "user" : "assistant",
       content: message.content,
     }));

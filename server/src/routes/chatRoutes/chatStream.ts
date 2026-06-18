@@ -88,7 +88,7 @@ router.post("/", async (req, res) => {
         where: { conversation_id: conversation.id },
         orderBy: { created_at: "asc" },
       });
-      history = dbMessages.map((message) => ({
+      history = dbMessages.map((message: { sender: string; content: string }) => ({
         role: message.sender === "USER" ? "user" : "assistant",
         content: message.content,
       }));
