@@ -1,4 +1,4 @@
-# 🌿 Lumé Support Bot — Premium AI Customer Support
+# Lumé Support Bot — Premium AI Customer Support
 
 Lumé is a high-fidelity, premium AI-powered customer support chat application designed to simulate live support interactions for a modern lifestyle e-commerce store. 
 
@@ -24,6 +24,7 @@ Create a `.env` file in the `/server` directory and configure the following:
 
 ```env
 PORT=5000
+FRONTEND_URL=""
 
 # PostgreSQL Connection Strings
 # For migration tasks (direct connection to Postgres)
@@ -37,6 +38,7 @@ GEMINI_API="your-gemini-api-key-here"
 # Upstash Redis Credentials for memory caching
 UPSTASH_REDIS_REST_URL="https://your-redis-instance-name.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-redis-token-here"
+
 ```
 
 Create a `.env` file in the `/client` directory:
@@ -178,5 +180,4 @@ Key instructions:
 
 ### Future Enhancements
 - **Real-Time Token Streaming**: Implement Server-Sent Events (SSE) to stream tokens in real-time, improving perceived latency.
-- **Standard Markdown Renderer**: The application has transitioned to the official `react-markdown` library for robust, standard-compliant rendering of rich text.
 - **Interactive Tools**: Add function calling to let the bot query actual Order Status APIs from a mock shipping database using the user's order ID.
