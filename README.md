@@ -1,4 +1,4 @@
-# 🌿 Lumé Support Bot — Premium AI Customer Support
+# Lumé Support Bot — Premium AI Customer Support
 
 Lumé is a high-fidelity, premium AI-powered customer support chat application designed to simulate live support interactions for a modern lifestyle e-commerce store. 
 
@@ -180,5 +180,4 @@ Key instructions:
 
 ### Future Enhancements
 - **Real-Time Token Streaming**: Implement Server-Sent Events (SSE) to stream tokens in real-time, improving perceived latency.
-- **Standard Markdown Renderer**: The application has transitioned to the official `react-markdown` library for robust, standard-compliant rendering of rich text.
 - **Interactive Tools**: Add function calling to let the bot query actual Order Status APIs from a mock shipping database using the user's order ID.
