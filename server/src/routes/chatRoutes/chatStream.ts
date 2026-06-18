@@ -7,7 +7,7 @@ import { updateChatCache } from "../../lib/cache.js";
 
 const router = Router();
 const CACHE_TTL = 60 * 60 * 2; // 2 hours
-const MAX_MESSAGES_LENGTH = 500;
+const MAX_MESSAGES_LENGTH = 1000;
 
 // POST /api/chat/stream
 router.post("/", async (req, res) => {

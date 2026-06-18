@@ -57,7 +57,7 @@ Deploy the database schema using Prisma:
    npm install
    npx prisma db push
    ```
-   *Note: This command will generate the local Prisma Client inside `server/src/generated/prisma` and synchronise the models to your active PostgreSQL instance.*
+   *Note: This command will generate the local Prisma Client inside `server/src/generated/prisma` and synchronize the models to your active PostgreSQL instance.*
 
 ---
 
@@ -87,7 +87,7 @@ The project uses a clean **layered separation of concerns** pattern:
 ```
                   ┌───────────────────────┐
                   │   React Chat Client   │
-                  │   (Vite + Tailwind)   │
+                  │ (Vite + Tailwind/CSS) │
                   └───────────┬───────────┘
                               │
                     HTTP / JSON / Cookies
@@ -118,14 +118,40 @@ The project uses a clean **layered separation of concerns** pattern:
 
 ### 📂 Folder Structure
 *   **`/client`**: The UI codebase.
-    *   `src/App.tsx`: The primary chat controller managing scroll states, key triggers, loaders, and dark mode hooks.
-    *   `src/components`: UI components including standard styling for the suggested question tags and navbar.
-    *   `src/utils`: Utilities for custom markdown parsing (bold, lists, code styles) and API error formatting.
+    *   `src/App.tsx`: The primary chat controller managing scroll states, key triggers, loaders, dark mode hooks, and session synchronization.
+    *   `src/components`: UI components including the suggested question tags and navbar.
+    *   `src/api/chatApi.ts`: Client API methods supporting session-based requests.
 *   **`/server`**: The API backend.
     *   `src/index.ts`: Entry file setting up body-parser, cookie-parser, and CORS rules.
     *   `src/routes`: Contains `/chat` route handlers mapping endpoints for session generation (`/new`), message posting (`/stream`), and chat recovery (`/history`).
+    *   `src/lib/cache.ts`: Resilient cache manager implementing robust synchronization between Redis and PostgreSQL.
     *   `src/services/gemini.ts`: Encapsulation layer for LLM prompt configuration and model triggers.
     *   `src/lib`: Singletons for Redis connections, Prisma client exports, and database instances.
+
+---
+
+## 🔗 Session Management & URL Syncing
+
+Lumé includes a robust, client-first session state management mechanism:
+- **URL Synchronization**: The active `sessionId` is synchronized to the URL's query parameters (`?sessionId=<id>`) using `window.history.replaceState`. This makes sharing chat sessions or copying URLs simple.
+- **Dynamic Generation**: When starting a "New Chat", the client generates a unique `sessionId` (via `nanoid`), clears the state, and updates the URL.
+- **Multimodal Identification**: The backend resolves the user's session ID by checking query parameters (`req.query.sessionId`), the request body (`req.body.sessionId`), or the HTTP-only cookie fallback (`req.cookies.chat_sessionId`).
+- **Database Uniqueness**: To guarantee data integrity and prevent collision, the `session_id` field in the database `Conversation` schema is marked `@unique`.
+
+---
+
+## 🛡️ Resilient Caching & Persistence Strategy
+
+Lumé implements a highly resilient, fail-soft caching architecture designed to remain operational even during service disruptions:
+1. **Centralized Cache Manager**: The helper `server/src/lib/cache.ts` manages Redis caching. It automatically synchronizes data between PostgreSQL and Redis.
+2. **Graceful Fallbacks**: If Redis goes offline or runs into write/read limits, the system catches the exceptions and falls back directly to the PostgreSQL database. This ensures continuous, uninterrupted chat service.
+3. **Validation & Error Logging**:
+   - If a message exceeds `MAX_MESSAGES_LENGTH` (1000 characters), the error and the original query are persisted to the database and cached.
+   - If a backend API error occurs (e.g. Gemini quota issues), the error message is recorded in the conversation stream so the user sees the inline error.
+4. **Contextual Memory Workflow**:
+   - Previous messages are formatted into a Gemini-compliant format (e.g. mapping roles like `USER` to `'user'` and `ASSISTANT` to `'model'`).
+   - The mapped history is injected into the `generateContent` payload array along with the new question.
+   - Cached histories in Redis are set with a TTL of 2 hours.
 
 ---
 
@@ -141,22 +167,16 @@ Key instructions:
 - **System Prompt**: Seeding detailed guidelines containing Lumé store policy data (Refund rules, Domestic/International delivery timelines, Support hours, Payment gateways, order cancellation terms).
 - **Hard Guardrails**: *"Answer only using the store knowledge. If information is unavailable, say: 'I don't have that information.'"*
 
-### 3. Contextual Memory Workflow
-Unlike basic chatbot implementations, Lumé preserves complete conversation memory:
-1.  **Retrieve History**: On receiving a new query, the server first attempts to read history from Redis cache. If expired, it queries PostgreSQL via Prisma.
-2.  **Mapping Roles**: Previous messages are formatted into Gemini-compliant structure (e.g. converting `USER` to `'user'` and `ASSISTANT` to `'model'`).
-3.  **In-flight Context Submission**: The history sequence is passed in the `contents` parameter array of the `generateContent` call along with the current question.
-4.  **Optimized Caching**: After generation, we append both user question and response to our local history array and push it to Redis with a TTL of 2 hours, keeping database reads at a minimum.
-
 ---
 
 ## ⚖️ Trade-offs & Future Improvements
 
 ### Trade-offs Made
-- **Cookie Session-ID**: Session ID management uses HTTP-only browser cookies for convenience. A header-based token system (`Authorization` or query parameters) would be preferred if this were integrated into a native app or third-party CRM chat widget.
-- **RAG vs Context Windows**: Policy details are hardcoded directly in the prompt. While this is cost-effective and highly reliable for small-medium stores, a real production bot would leverage RAG (Retrieval-Augmented Generation) from a Vector database to fetch only relevant context on-demand for massive catalogs.
+- **Client-Generated Session-ID**: Session ID is generated on the client via `nanoid()` when a new session is initialized. This enables URL parameters to be clean from step one.
+- **Resilient Fallback Overhead**: When Redis is down, querying the database on every message incurs extra latency compared to the cache, but ensures the chat never crashes.
+- **In-Memory System Prompt**: Policy details are hardcoded directly in the prompt. For larger scale catalogs, a Retrieval-Augmented Generation (RAG) system with a vector database (e.g. Pinecone/pgvector) would be preferred to save context window tokens.
 
-### If I Had More Time...
-- **Real-Time Token Streaming**: Implement SSE (Server-Sent Events) to stream response tokens word-by-word into the React client interface, raising visual responsiveness.
-- **Auto-Summarization**: Summarize history if a conversation goes beyond 20 turns, keeping token counts low and preventing prompt fatigue.
+### Future Enhancements
+- **Real-Time Token Streaming**: Implement Server-Sent Events (SSE) to stream tokens in real-time, improving perceived latency.
+- **Standard Markdown Renderer**: The application has transitioned to the official `react-markdown` library for robust, standard-compliant rendering of rich text.
 - **Interactive Tools**: Add function calling to let the bot query actual Order Status APIs from a mock shipping database using the user's order ID.
