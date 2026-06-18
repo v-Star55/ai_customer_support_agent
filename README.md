@@ -24,6 +24,7 @@ Create a `.env` file in the `/server` directory and configure the following:
 
 ```env
 PORT=5000
+FRONTEND_URL=""
 
 # PostgreSQL Connection Strings
 # For migration tasks (direct connection to Postgres)
@@ -37,6 +38,7 @@ GEMINI_API="your-gemini-api-key-here"
 # Upstash Redis Credentials for memory caching
 UPSTASH_REDIS_REST_URL="https://your-redis-instance-name.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-redis-token-here"
+
 ```
 
 Create a `.env` file in the `/client` directory:
