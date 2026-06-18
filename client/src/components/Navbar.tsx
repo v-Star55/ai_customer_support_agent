@@ -13,11 +13,9 @@ export default function Navbar({ onNewChat, isDark, onToggleDark }: Readonly<Nav
       className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-4 px-2 py-2 rounded-full
         shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]
         dark:shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]
-        border border-black/6 dark:border-white/8"
+        border border-cream-dark/60 dark:border-white/8"
       style={{
-        background: isDark
-          ? "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%)"
-          : "linear-gradient(135deg, rgba(235,225,207,0.55) 0%, rgba(235,225,207,0.35) 100%)",
+        background: "var(--glass-navbar-bg)",
         backdropFilter: "blur(20px) saturate(1.8)",
         WebkitBackdropFilter: "blur(20px) saturate(1.8)",
         minWidth: "min(540px, 92vw)",

@@ -20,7 +20,7 @@ enum Sender {
 
 model Conversation {
     id            String   @id @default(cuid())
-    session_id    String   
+    session_id    String   @unique
     created_at    DateTime @default(now())
     updated_at    DateTime @updatedAt
 

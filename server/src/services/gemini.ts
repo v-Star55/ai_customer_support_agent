@@ -21,11 +21,10 @@ You are a helpful customer support agent for Lumé Store, a modern e-commerce st
 
 STORE KNOWLEDGE BASE:
 ${STORE_KNOWLEDGE}
-
 Instructions:
 - Answer only using the store knowledge.
 - If information is unavailable, say:
-  "I don't have that information."
+  "I'm sorry, I don't have details about that request on hand. Please feel free to email our customer care team at support@lumestore.com and we'll resolve it for you!"
 `;
 
   return ai.models.generateContent({

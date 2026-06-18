@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { chatStream, getChatHistory,newChat } from "./api/chatApi";
+import { chatStream, getChatHistory, newChat } from "./api/chatApi";
 import { TbSend2, TbUser } from "react-icons/tb";
 import Navbar from "./components/Navbar";
 import SuggestedQuestions from "./components/SuggestedQuestions";
 import { SyncLoader } from "react-spinners";
-import { parseMarkdown } from "./utils/markdown";
+import ReactMarkdown from "react-markdown";
 import { getErrorMessage } from "./utils/error";
+import { nanoid } from "nanoid";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -33,9 +34,13 @@ function App() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("lume-theme") === "dark";
+  });
+  const [sessionId, setSessionId] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("sessionId") || "";
   });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -50,18 +55,30 @@ function App() {
   }, [isDark]);
 
   useEffect(() => {
+    if (sessionId === null && messages.length === 0) {
+      // Skip fetching history if it's already an empty state
+      return;
+    }
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await getChatHistory();
+        const response = await getChatHistory(sessionId || undefined);
         setMessages(response.messages || []);
+
+        // Sync URL and state if session ID was generated/retrieved by backend
+        if (!sessionId && response.sessionId) {
+          setSessionId(response.sessionId);
+          const url = new URL(window.location.href);
+          url.searchParams.set("sessionId", response.sessionId);
+          window.history.replaceState({}, "", url.toString());
+        }
       } catch {
         // silently handle
       }
       setLoading(false);
     };
     fetchMessages();
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -86,7 +103,7 @@ function App() {
     ]);
     setIsStreaming(true);
     try {
-      const response = await chatStream(userQ);
+      const response = await chatStream(userQ, sessionId || undefined);
       setMessages((prev) => updateLastAssistantMessage(prev, response));
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);
@@ -100,8 +117,16 @@ function App() {
   const handleNewChat = async () => {
     setLoading(true);
     try {
-      const response = await newChat();
-      setMessages(response.messages || []);
+      await newChat(sessionId || undefined);
+
+      // Generate new session ID and sync to URL and state
+      const newId = nanoid();
+      const url = new URL(window.location.href);
+      url.searchParams.set("sessionId", newId);
+      window.history.replaceState({}, "", url.toString());
+
+      setSessionId(newId);
+      setMessages([]);
     } catch (error) {
       console.log("Error creating new chat", error);
     }
@@ -177,11 +202,10 @@ function App() {
 
                   {/* Bubble */}
                   <div
-                    className={`max-w-[75%] rounded-2xl px-5 py-3.5 font-body text-sm leading-relaxed tracking-wide ${
-                      msg.role === "user"
+                    className={`max-w-[75%] rounded-2xl px-5 py-3.5 font-body text-sm leading-relaxed tracking-wide ${msg.role === "user"
                         ? "bg-forest text-white rounded-br-md"
                         : "bg-white dark:bg-white/6 border border-cream-dark/50 dark:border-white/8 text-black/85 dark:text-cream/90 rounded-bl-md shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
-                    }`}
+                      }`}
                   >
                     {isAssistantLoading ? (
                       <div className="flex items-center justify-start py-1">
@@ -193,7 +217,9 @@ function App() {
                         />
                       </div>
                     ) : (
-                      parseMarkdown(msg.content)
+                      <div className="markdown-content">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
                     )}
                   </div>
 
@@ -213,21 +239,21 @@ function App() {
 
       {/* Input Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 pb-6 pt-4 px-4">
-        <div className="absolute inset-0 bg-linear-to-t from-white dark:from-black via-white/90 dark:via-black/90 to-transparent pointer-events-none" />
+        {/* Light mode gradient overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-white via-white/90 to-transparent pointer-events-none dark:hidden" />
+        {/* Dark mode gradient overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/90 to-transparent pointer-events-none hidden dark:block" />
 
         <div className="relative max-w-3xl mx-auto">
           <div
             className="flex items-end gap-3 rounded-[24px] px-5 py-2.5
-              border border-black/[0.06] dark:border-white/[0.08]
+              border border-cream-dark/60 dark:border-white/[0.08]
               shadow-[0_4px_20px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)]
               dark:shadow-[0_4px_20px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]
-              transition-all duration-300
               focus-within:border-forest/25 dark:focus-within:border-cream/20
               focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.06),0_0_0_3px_rgba(10,72,52,0.08)]"
             style={{
-              background: isDark
-                ? "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)"
-                : "linear-gradient(135deg, rgba(235,225,207,0.45) 0%, rgba(235,225,207,0.25) 100%)",
+              background: "var(--glass-bg)",
               backdropFilter: "blur(20px) saturate(1.6)",
               WebkitBackdropFilter: "blur(20px) saturate(1.6)",
             }}
