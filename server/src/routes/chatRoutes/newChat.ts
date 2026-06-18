@@ -15,7 +15,11 @@ router.post("/", async (req, res) => {
         }
     }
 
-    res.clearCookie("chat_sessionId");
+    res.clearCookie("chat_sessionId", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+    });
 
     return res.status(200).json({ success: true });
 })

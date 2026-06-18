@@ -30,9 +30,9 @@ router.get("/", async (req, res) => {
   // Always set or refresh the cookie
   res.cookie("chat_sessionId", sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     maxAge: 3600 * 24 * 7, // 1 week
-    sameSite: "lax",
+    sameSite: "none",
   });
 
   // retrieve messages from redis
