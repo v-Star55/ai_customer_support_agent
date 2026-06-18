@@ -1,0 +1,13 @@
+node_modules/
+dist/
+
+# Keep environment variables out of version control
+.env
+.env.local
+*.env
+
+# Local Prisma Client output path
+src/generated/prisma/
+
+# System logs
+*.log

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Palette */
+  --color-cream: #EBE1CF;
+  --color-cream-dark: #D9CEBC;
+  --color-cream-light: #F5F0E6;
+  --color-forest: #0A4834;
+  --color-forest-light: #0D5C43;
+  --color-forest-dim: #083D2C;
+  --color-gold: #9F8151;
+  --color-gold-light: #B89A6A;
+  --color-gold-dim: #87703F;
+  --color-black: #000000;
+  --color-white: #FFFFFF;
+  --color-glass-border: rgba(255, 255, 255, 0.55);
+
+  /* Fonts */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Jost", "Segoe UI", sans-serif;
+  --font-accent: "Cinzel", "Cormorant Garamond", serif;
+}
+
+html {
+  background-color: #FFFFFF;
+}
+html.dark {
+  background-color: #000000;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Jost", "Segoe UI", sans-serif;
+  background: #FFFFFF;
+  color: #000000;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.dark body {
+  background: #000000;
+  color: #F0EDE8;
+}
+
+/* Animations */
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.2; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(10, 72, 52, 0.2);
+  border-radius: 999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(201, 169, 110, 0.2);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
